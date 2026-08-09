@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: jinxo-online
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: 22.14.0
+      - key: BINGO_BONUS
+        value: "3"
