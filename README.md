@@ -25,4 +25,4 @@ npm run dev
 npm run check
 ```
 
-`render.yaml`은 Render Web Service용 Blueprint입니다. `main` 브랜치에서 자동 배포되며 `/health`로 상태를 확인합니다. 첫 배포는 단일 인스턴스의 메모리 방 상태를 사용합니다.
+`render.yaml`은 Render Web Service용 Blueprint입니다. Free 플랜은 비활성 상태 뒤 휴면하므로 첫 요청이 느릴 수 있습니다. `/health`로 상태를 확인하며, 첫 배포는 단일 인스턴스의 메모리 방 상태를 사용합니다.
