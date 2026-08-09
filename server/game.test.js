@@ -17,3 +17,7 @@ test('a circle line receives configured bingo bonus', () => {
   const p = { board: Array.from({ length: 9 }, (_, i) => i < 3 ? { mark: 'circle' } : { mark: 'cross' }), stars: 0 };
   assert.deepEqual(score(p, 3), { points: 6, lines: 1, circles: 3, stars: 0 });
 });
+test('stars are worth two points without also counting as circles', () => {
+  const p = { board: [{ mark: 'star' }, { mark: 'star' }, { mark: 'cross' }, ...Array(6).fill({ mark: 'cross' })], stars: 2 };
+  assert.deepEqual(score(p, 3), { points: 4, lines: 0, circles: 0, stars: 2 });
+});

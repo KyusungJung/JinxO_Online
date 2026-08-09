@@ -53,7 +53,7 @@ export function resolveRound(room) {
   room.deadline = null;
 }
 export function score(p, bonus = 3) {
-  const circles = p.board.filter(cell => cell?.mark === 'circle' || cell?.mark === 'star').length;
+  const circles = p.board.filter(cell => cell?.mark === 'circle').length;
   const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]].filter(line => line.every(index => ['circle','star'].includes(p.board[index]?.mark))).length;
   return { points: circles + p.stars * 2 + lines * bonus, lines, circles, stars: p.stars };
 }
