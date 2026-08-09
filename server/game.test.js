@@ -3,10 +3,15 @@ import assert from 'node:assert/strict';
 import { createRoom, normalize, resolveRound, score, startRound, submit } from './game.js';
 
 test('normalization ignores case, spaces and punctuation', () => assert.equal(normalize('  Pizza! 토핑 '), normalize('pizza 토핑')));
-test('two matching players receive a star and solo answer is cross', () => {
+test('one topic fills three board cells; matching two gets a star and solo answer is cross', () => {
   const room = createRoom('AAAAA', 'a', 'A'); room.players.set('b', { id: 'b', name: 'B', connected: true, board: Array(9).fill(null), stars: 0 });
-  startRound(room); assert.equal(submit(room, 'a', ['피자', '', '']), true); assert.equal(submit(room, 'b', [' 피자!', '', '']), true); resolveRound(room);
-  assert.equal(room.players.get('a').board[0].mark, 'star'); assert.equal(room.players.get('a').stars, 1);
+  startRound(room); assert.equal(submit(room, 'a', ['피자', '콜라', '감자']), true); assert.equal(submit(room, 'b', [' 피자!', '치즈', '감자']), true); resolveRound(room);
+  assert.deepEqual(room.players.get('a').board.slice(0, 3).map(cell => cell.mark), ['star', 'cross', 'star']); assert.equal(room.players.get('a').stars, 2);
+});
+test('the third topic completes a nine-cell board and results', () => {
+  const room = createRoom('AAAAA', 'a', 'A');
+  for (let round = 0; round < 3; round += 1) { startRound(room); submit(room, 'a', ['a', 'b', 'c']); resolveRound(room); }
+  assert.equal(room.phase, 'results'); assert.equal(room.board, undefined); assert.equal(room.players.get('a').board.filter(Boolean).length, 9);
 });
 test('a circle line receives configured bingo bonus', () => {
   const p = { board: Array.from({ length: 9 }, (_, i) => i < 3 ? { mark: 'circle' } : { mark: 'cross' }), stars: 0 };

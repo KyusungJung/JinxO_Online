@@ -41,14 +41,15 @@ export function resolveRound(room) {
   }
   for (const [id, p] of room.players) {
     const answers = room.submissions.get(id) ?? [];
-    const answersWithState = answers.filter(Boolean).map(answer => {
-      const count = groups.get(normalize(answer))?.size ?? 1;
+    const answersWithState = Array.from({ length: 3 }, (_value, index) => {
+      const answer = answers[index] ?? '';
+      const count = answer ? groups.get(normalize(answer))?.size ?? 1 : 1;
       return { answer, mark: count === 2 ? 'star' : count >= 3 ? 'circle' : 'cross' };
     });
-    p.board[room.round] = { answers: answersWithState, mark: answersWithState.some(a => a.mark === 'star') ? 'star' : answersWithState.some(a => a.mark === 'circle') ? 'circle' : 'cross' };
+    answersWithState.forEach((cell, index) => { p.board[room.round * 3 + index] = cell; });
     p.stars += answersWithState.filter(a => a.mark === 'star').length;
   }
-  room.phase = room.round === 8 ? 'results' : 'resolving';
+  room.phase = room.round === 2 ? 'results' : 'resolving';
   room.deadline = null;
 }
 export function score(p, bonus = 3) {

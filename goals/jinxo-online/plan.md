@@ -2,7 +2,7 @@
 
 ## 접근 방식
 
-JinxO는 같은 주제에 대한 3개 답안을 비공개로 작성한 뒤 일치도를 자동 판정해 개인 3×3 보드에 쌓는 실시간 파티 게임으로 만든다. 첫 버전은 가입 없는 초대방(2~7명), 9라운드, 결과 및 재대결에 집중한다. TypeScript 모노레포로 구성해 브라우저 UI와 Socket.IO 게임 서버가 하나의 순수 게임 엔진·이벤트 계약을 공유하도록 한다. Render에는 Web Service 하나를 배포해 정적 클라이언트와 WebSocket 서버를 함께 제공한다.
+JinxO는 같은 주제에 대한 3개 답안을 비공개로 작성한 뒤 일치도를 자동 판정해 개인 3×3 보드에 쌓는 실시간 파티 게임으로 만든다. 원작 규칙대로 3개 주제에서 각 3개 답안을 기록해 총 9칸을 채운다. 첫 버전은 가입 없는 초대방(2~7명), 결과 및 재대결에 집중한다. TypeScript 모노레포로 구성해 브라우저 UI와 Socket.IO 게임 서버가 하나의 순수 게임 엔진·이벤트 계약을 공유하도록 한다. Render에는 Web Service 하나를 배포해 정적 클라이언트와 WebSocket 서버를 함께 제공한다.
 
 ## 디자인 기준
 
@@ -29,8 +29,8 @@ stateDiagram-v2
   Lobby --> Prompt: host starts (2–7 ready players)
   Prompt --> Answering: topic broadcast
   Answering --> Resolving: all submit or 75 s elapsed
-  Resolving --> Prompt: round < 9
-  Resolving --> Results: round = 9
+  Resolving --> Prompt: topic < 3
+  Resolving --> Results: topic = 3
   Results --> Lobby: host rematch
 ```
 
@@ -44,15 +44,15 @@ stateDiagram-v2
 
 ### 최종 점수
 
-9개 보드를 모두 기록한 뒤 ○=1점, ★=2점, ×=0점으로 합산한다. ○만으로 완성된 가로/세로/대각선 줄을 계산해 보너스를 더한다. 동점은 **빙고 줄 수 → 별 수 → 공동 우승** 순서다.
+3개 주제에서 각각 답 3개를 기록해 9칸을 모두 채운 뒤 ○=1점, ★=2점, ×=0점으로 합산한다. ○만으로 완성된 가로/세로/대각선 줄을 계산해 보너스를 더한다. 동점은 **빙고 줄 수 → 별 수 → 공동 우승** 순서다.
 
 ## 구현 단계
 
 1. **프로젝트 뼈대와 공통 계약** — 루트에 `apps/web`, `apps/server`, `packages/game-engine`, `packages/shared`, 워크스페이스 설정, TypeScript strict, ESLint/Prettier, Vitest를 구성한다. `shared`에 Socket 이벤트 스키마(Zod)·상태 타입을, `game-engine`에 상태 전이와 점수 계산을 둔다.
    - 검증: `pnpm lint`, `pnpm typecheck`, `pnpm test`가 빈 뼈대에서도 통과한다.
 
-2. **순수 규칙 엔진** — 주제 덱, 3개 답 검증, 답안 정규화·그룹화, 9라운드 상태 전이, 3×3 보드 기록, 빙고/동점 계산을 `packages/game-engine`에 구현한다. 시간은 서버 주입 시계로 계산해 테스트 가능하게 한다.
-   - 검증: Vitest로 공백/대소문자/문장부호 일치, 빈 칸, 중복 답 거절, 2명/3명 이상 판정, 9라운드, 행·열·대각선, 공동 우승을 망라한다.
+2. **순수 규칙 엔진** — 주제 덱, 3개 답 검증, 답안 정규화·그룹화, 3개 주제 상태 전이, 각 주제의 3답안을 3×3 보드의 다음 3칸에 기록하는 로직, 빙고/동점 계산을 `packages/game-engine`에 구현한다. 시간은 서버 주입 시계로 계산해 테스트 가능하게 한다.
+   - 검증: Vitest로 공백/대소문자/문장부호 일치, 빈 칸, 중복 답 거절, 2명/3명 이상 판정, 3주제×3칸 기록, 행·열·대각선, 공동 우승을 망라한다.
 
 3. **실시간 방 서버** — Express + Socket.IO 서버에서 방 생성/입장/퇴장/재연결, 호스트 권한, 최대 7명, 라운드 타이머, 제출 잠금, 이벤트 방송을 만든다. 메모리 저장으로 시작하고 인스턴스 1개 고정 배포를 명시한다.
    - 검증: Socket.IO 통합 테스트로 두 클라이언트의 방 합류·게임 시작·자동 타임아웃·동시 제출·재연결을 검증하고, 잘못된 이벤트/비호스트 시작을 거절한다.
