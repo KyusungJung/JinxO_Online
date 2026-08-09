@@ -1,0 +1,80 @@
+{
+  "stage": "interview",
+  "title": "JinxO 온라인 게임 기획 확인",
+  "goalSlug": "jinxo-online",
+  "questions": [
+    {
+      "id": "release-scope",
+      "prompt": "첫 공개 버전의 범위를 어디까지로 할까요?",
+      "description": "추천안은 방 생성·초대 코드·2~7인 실시간 한 게임·9라운드·점수 결과·재대결입니다. 계정, 친구, 랭킹, 결제는 후속 범위로 둡니다.",
+      "answerMode": "multi-custom",
+      "recommendedAnswer": "방 생성·초대 코드·2~7인 실시간 게임·결과·재대결만 포함",
+      "recommendedOptionIds": ["rooms", "realtime-game", "results-rematch"],
+      "options": [
+        { "id": "rooms", "label": "방 생성 및 초대 코드" },
+        { "id": "realtime-game", "label": "2~7인 실시간 9라운드" },
+        { "id": "results-rematch", "label": "결과와 재대결" },
+        { "id": "accounts", "label": "계정·프로필" },
+        { "id": "matchmaking", "label": "공개 매칭" },
+        { "id": "ranking", "label": "랭킹" }
+      ],
+      "required": true
+    },
+    {
+      "id": "identity",
+      "prompt": "플레이어 입장 방식을 선택해 주세요.",
+      "description": "추천안은 가입 없이 닉네임으로 입장해 친구와 빠르게 시작하는 방식입니다.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "닉네임만 입력하는 게스트 입장",
+      "recommendedOptionIds": ["guest"],
+      "options": [
+        { "id": "guest", "label": "게스트 닉네임" },
+        { "id": "social", "label": "소셜 로그인" },
+        { "id": "email", "label": "이메일 계정" }
+      ],
+      "required": true
+    },
+    {
+      "id": "prompt-content",
+      "prompt": "첫 버전의 주제 카드는 어떤 방식으로 제공할까요?",
+      "description": "추천안은 저작권 문제가 없는 자체 제작 한국어 일반 주제 100개 내외를 앱에 포함하고, 방장이 무작위로 뽑게 하는 방식입니다.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "내장 한국어 일반 주제 카드",
+      "recommendedOptionIds": ["built-in"],
+      "options": [
+        { "id": "built-in", "label": "내장 주제 카드" },
+        { "id": "host-custom", "label": "방장 직접 입력" },
+        { "id": "both", "label": "둘 다 제공" }
+      ],
+      "required": true
+    },
+    {
+      "id": "round-timing",
+      "prompt": "각 라운드의 답안 작성 시간과 미제출 처리 방식을 정해 주세요.",
+      "description": "추천안은 75초 타이머, 시간 종료 시 작성된 답만 제출하며 빈 칸은 X로 처리하는 방식입니다.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "75초, 작성된 답만 제출, 빈 칸은 X",
+      "recommendedOptionIds": ["75s-partial"],
+      "options": [
+        { "id": "60s-partial", "label": "60초 부분 제출" },
+        { "id": "75s-partial", "label": "75초 부분 제출" },
+        { "id": "no-timer", "label": "타이머 없음" }
+      ],
+      "required": true
+    },
+    {
+      "id": "matching-rules",
+      "prompt": "동일 답안 판정과 동점 규칙을 확정해 주세요.",
+      "description": "추천안은 공백·대소문자·기본 문장부호를 무시한 완전 일치만 자동 매칭하고, 2명 일치=○+별, 3명 이상 일치=○, 혼자=×로 적용합니다. 최종 동점자는 빙고 줄 수, 그다음 별 수, 마지막으로 공동 우승입니다.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "정규화된 완전 일치 자동 판정 + 빙고 줄/별/공동 우승 순 동점 처리",
+      "recommendedOptionIds": ["automatic"],
+      "options": [
+        { "id": "automatic", "label": "자동 완전 일치" },
+        { "id": "host-review", "label": "방장 판정 포함" },
+        { "id": "vote-review", "label": "참가자 투표 판정" }
+      ],
+      "required": true
+    }
+  ]
+}

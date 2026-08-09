@@ -1,0 +1,16 @@
+{
+  "stage": "facts",
+  "title": "JinxO 온라인 게임 사실 검토",
+  "goalSlug": "jinxo-online",
+  "facts": [
+    {"id":"multiplayer-room","text":"플레이어는 가입 없이 닉네임을 입력하고, 방 생성 또는 초대 코드로 2~7인 게임 대기실에 참여할 수 있다.","accepted":false,"removed":false,"recommendedAutomatedVerification":true,"automatedVerification":true},
+    {"id":"round-flow","text":"방장은 시작 후 무작위 내장 한국어 주제 카드를 공개하며, 게임은 9라운드로 진행된다.","accepted":false,"removed":false,"recommendedAutomatedVerification":true,"automatedVerification":true},
+    {"id":"answer-timing","text":"각 라운드에서 모든 플레이어는 75초 안에 서로 다른 답 3개를 입력하고, 만료 시 작성된 답만 제출되며 빈 칸은 X로 처리된다.","accepted":false,"removed":false,"recommendedAutomatedVerification":true,"automatedVerification":true},
+    {"id":"match-scoring","text":"공백·대소문자·기본 문장부호를 무시한 완전 일치 답안은 자동으로 묶이며, 두 명 일치는 ○와 별, 세 명 이상 일치는 ○, 혼자 낸 답은 X로 표시된다.","accepted":false,"removed":false,"recommendedAutomatedVerification":true,"automatedVerification":true},
+    {"id":"final-scoring","text":"9라운드 종료 뒤 ○는 1점, 별은 2점, X는 0점이며 ○로 완성한 가로·세로·대각선 빙고 줄마다 보너스 점수를 더해 순위를 계산한다.","accepted":false,"removed":false,"recommendedAutomatedVerification":true,"automatedVerification":true},
+    {"id":"tie-resolution","text":"총점 동점자는 ○ 빙고 줄 수, 별 수 순으로 비교하고, 모두 같으면 공동 우승으로 표시한다.","accepted":false,"removed":false,"recommendedAutomatedVerification":true,"automatedVerification":true},
+    {"id":"post-game","text":"결과 화면은 모든 플레이어의 보드·점수 상세·승자를 보여 주며, 같은 멤버로 재대결을 시작할 수 있다.","accepted":false,"removed":false,"recommendedAutomatedVerification":true,"automatedVerification":true},
+    {"id":"visual-design","text":"웹 UI는 Stitch 레퍼런스를 우선 확인해 적용하고, 첨부된 제품 이미지의 밝은 노랑 바탕, 마젠타·시안·그린 대비, 굵은 코믹 타이포그래피와 카드형 게임 보드 분위기를 반영한다.","accepted":false,"removed":false,"recommendedAutomatedVerification":false,"automatedVerification":false},
+    {"id":"delivery","text":"완성된 앱과 계획 문서는 KyusungJung/JinxO_Online 저장소에 커밋·푸시하고, Render 프로젝트 prj-d9s72jqfngtc73en1ch0에 배포 구성을 추가한다.","accepted":false,"removed":false,"recommendedAutomatedVerification":true,"automatedVerification":true}
+  ]
+}
