@@ -20,7 +20,7 @@ io.on('connection', socket => {
   socket.on('room:join', ({ code, name, playerId }, done) => {
     const room = roomFor(code); if (!room) return done({ error: '방을 찾을 수 없어요.' });
     let p = room.players.get(playerId);
-    if (!p && room.players.size >= 7) return done({ error: '방이 가득 찼어요.' });
+    if (!p && room.players.size >= 10) return done({ error: '방이 가득 찼어요.' });
     if (!p) { if (room.phase !== 'lobby') return done({ error: '이미 시작한 게임이에요.' }); p = { id: playerId, name: name.slice(0, 16), connected: true, board: Array(9).fill(null), stars: 0 }; room.players.set(playerId, p); }
     p.connected = true; socket.join(room.code); socket.data = { code: room.code, playerId }; broadcast(room); done({ room: snapshot(room), playerId });
   });

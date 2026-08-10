@@ -7,6 +7,11 @@ export const TOPICS = [
 const punctuation = /[\p{P}\p{S}]/gu;
 export const normalize = (value = '') => value.normalize('NFKC').toLocaleLowerCase('ko-KR').replace(punctuation, '').replace(/\s+/g, '').trim();
 export const makeCode = () => Math.random().toString(36).slice(2, 7).toUpperCase();
+export const isLargeRoom = room => room.players.size >= 8;
+export function markForMatch(count, largeRoom) {
+  if (largeRoom) return count >= 6 ? 'crowd' : count >= 4 ? 'circle' : count >= 2 ? 'star' : 'cross';
+  return count === 2 ? 'star' : count >= 3 ? 'circle' : 'cross';
+}
 
 export function createRoom(code, hostId, hostName, bonus = 3) {
   return { code, hostId, bonus, phase: 'lobby', round: -1, topic: null, players: new Map([[hostId, player(hostId, hostName)]]), submissions: new Map(), topics: shuffle([...TOPICS]), deadline: null, timer: null };
@@ -39,12 +44,13 @@ export function resolveRound(room) {
       group.add(playerId); groups.set(key, group);
     }
   }
+  const largeRoom = isLargeRoom(room);
   for (const [id, p] of room.players) {
     const answers = room.submissions.get(id) ?? [];
     const answersWithState = Array.from({ length: 3 }, (_value, index) => {
       const answer = answers[index] ?? '';
       const count = answer ? groups.get(normalize(answer))?.size ?? 1 : 1;
-      return { answer, mark: count === 2 ? 'star' : count >= 3 ? 'circle' : 'cross' };
+      return { answer, mark: markForMatch(count, largeRoom) };
     });
     answersWithState.forEach((cell, index) => { p.board[room.round * 3 + index] = cell; });
     p.stars += answersWithState.filter(a => a.mark === 'star').length;
@@ -58,5 +64,5 @@ export function score(p, bonus = 3) {
   return { points: circles + p.stars * 2 + lines * bonus, lines, circles, stars: p.stars };
 }
 export function snapshot(room) {
-  return { code: room.code, hostId: room.hostId, phase: room.phase, round: room.round, topic: room.topic, deadline: room.deadline, bonus: room.bonus, players: [...room.players.values()].map(p => ({ ...p, score: score(p, room.bonus) })) };
+  return { code: room.code, hostId: room.hostId, phase: room.phase, round: room.round, topic: room.topic, deadline: room.deadline, bonus: room.bonus, largeRoom: isLargeRoom(room), players: [...room.players.values()].map(p => ({ ...p, score: score(p, room.bonus) })) };
 }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRoom, normalize, resolveRound, score, startRound, submit } from './game.js';
+import { createRoom, markForMatch, normalize, resolveRound, score, startRound, submit } from './game.js';
 
 test('normalization ignores case, spaces and punctuation', () => assert.equal(normalize('  Pizza! 토핑 '), normalize('pizza 토핑')));
 test('one topic fills three board cells; matching two gets a star and solo answer is cross', () => {
@@ -20,4 +20,7 @@ test('a circle line receives configured bingo bonus', () => {
 test('stars are worth two points without also counting as circles', () => {
   const p = { board: [{ mark: 'star' }, { mark: 'star' }, { mark: 'cross' }, ...Array(6).fill({ mark: 'cross' })], stars: 2 };
   assert.deepEqual(score(p, 3), { points: 4, lines: 0, circles: 0, stars: 2 });
+});
+test('large-room rules reward 2–3 matches, downgrade 4–5 matches, and reject 6+ crowd answers', () => {
+  assert.deepEqual([1, 2, 3, 4, 5, 6].map(count => markForMatch(count, true)), ['cross', 'star', 'star', 'circle', 'circle', 'crowd']);
 });
