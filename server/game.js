@@ -22,7 +22,7 @@ export function markForMatch(count, largeRoom) {
 }
 
 export function createRoom(code, hostId, hostName, bonus = 3) {
-  return { code, hostId, bonus, phase: 'lobby', round: -1, topic: null, customTopics: [], players: new Map([[hostId, player(hostId, hostName)]]), submissions: new Map(), topics: shuffle([...TOPICS]), deadline: null, timer: null };
+  return { code, hostId, bonus, phase: 'lobby', round: -1, topic: null, customTopics: [], players: new Map([[hostId, player(hostId, hostName)]]), submissions: new Map(), sharing: null, topics: shuffle([...TOPICS]), deadline: null, timer: null };
 }
 function player(id, name) { return { id, name: name.slice(0, 16), connected: true, board: Array(9).fill(null), stars: 0 }; }
 function shuffle(values) { for (let i = values.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [values[i], values[j]] = [values[j], values[i]]; } return values; }
@@ -63,11 +63,27 @@ export function resolveRound(room) {
       const count = answer ? groups.get(normalize(answer))?.size ?? 1 : 1;
       return { slot: submission.slots[index], answer, mark: markForMatch(count, largeRoom) };
     });
-    answersWithState.forEach(cell => { if (Number.isInteger(cell.slot)) p.board[cell.slot] = { answer: cell.answer, mark: cell.mark }; });
+    answersWithState.forEach(cell => { if (Number.isInteger(cell.slot)) p.board[cell.slot] = { answer: cell.answer, mark: cell.mark, topic: room.topic, topicIndex: room.round, shared: false }; });
     p.stars += answersWithState.filter(a => a.mark === 'star').length;
   }
-  room.phase = room.round === 2 ? 'results' : 'resolving';
+  room.phase = 'sharing';
+  room.sharing = { turnOrder: [...room.players.values()].filter(p => p.connected).map(p => p.id), turnIndex: 0, selected: null };
   room.deadline = null;
+}
+export function shareAnswer(room, id, slot) {
+  if (room.phase !== 'sharing' || room.sharing?.turnOrder[room.sharing.turnIndex % room.sharing.turnOrder.length] !== id || room.sharing.selected) return false;
+  const cell = room.players.get(id)?.board[Number(slot)];
+  if (!cell || cell.shared || cell.topicIndex !== room.round) return false;
+  room.sharing.selected = { playerId: id, slot: Number(slot) };
+  return true;
+}
+export function nextShare(room, id) {
+  if (room.phase !== 'sharing' || room.sharing?.selected?.playerId !== id) return false;
+  const selectedPlayer = room.players.get(id); const selected = selectedPlayer?.board[room.sharing.selected.slot];
+  if (!selected) return false;
+  selected.shared = true; room.sharing.selected = null; room.sharing.turnIndex += 1;
+  if (room.sharing.turnIndex >= room.sharing.turnOrder.length * 3) { room.phase = room.round === 2 ? 'results' : 'resolving'; room.sharing = null; }
+  return true;
 }
 export function score(p, bonus = 3) {
   const circles = p.board.filter(cell => cell?.mark === 'circle').length;
@@ -75,5 +91,7 @@ export function score(p, bonus = 3) {
   return { points: circles + p.stars * 2 + lines * bonus, lines, circles, stars: p.stars };
 }
 export function snapshot(room) {
-  return { code: room.code, hostId: room.hostId, phase: room.phase, round: room.round, topic: room.topic, customTopics: room.customTopics, deadline: room.deadline, bonus: room.bonus, largeRoom: isLargeRoom(room), players: [...room.players.values()].map(p => ({ ...p, score: score(p, room.bonus) })) };
+  const selected = room.sharing?.selected;
+  const selectedCell = selected && room.players.get(selected.playerId)?.board[selected.slot];
+  return { code: room.code, hostId: room.hostId, phase: room.phase, round: room.round, topic: room.topic, customTopics: room.customTopics, deadline: room.deadline, bonus: room.bonus, largeRoom: isLargeRoom(room), sharing: room.sharing && { currentPlayerId: room.sharing.turnOrder[room.sharing.turnIndex % room.sharing.turnOrder.length], selected: selected && { ...selected, answer: selectedCell?.answer, topic: selectedCell?.topic, topicIndex: selectedCell?.topicIndex } }, players: [...room.players.values()].map(p => ({ ...p, score: score(p, room.bonus) })) };
 }
