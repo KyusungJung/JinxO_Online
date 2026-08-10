@@ -24,6 +24,12 @@ io.on('connection', socket => {
     if (!p) { if (room.phase !== 'lobby') return done({ error: '이미 시작한 게임이에요.' }); p = { id: playerId, name: name.slice(0, 16), connected: true, board: Array(9).fill(null), stars: 0 }; room.players.set(playerId, p); }
     p.connected = true; socket.join(room.code); socket.data = { code: room.code, playerId }; broadcast(room); done({ room: snapshot(room), playerId });
   });
+  socket.on('room:topics', ({ code, playerId, topics }, done) => {
+    const room = roomFor(code); if (!room || room.hostId !== playerId || room.phase !== 'lobby') return done?.({ error: '방장만 시작 전에 주제를 설정할 수 있어요.' });
+    const cleaned = (topics ?? []).map(topic => String(topic ?? '').trim()).filter(Boolean).slice(0, 3);
+    if (cleaned.some(topic => topic.length > 64) || new Set(cleaned.map(topic => topic.toLocaleLowerCase('ko-KR'))).size !== cleaned.length) return done?.({ error: '주제는 64자 이내로 서로 다르게 입력해 주세요.' });
+    room.customTopics = cleaned; broadcast(room); done?.({ ok: true });
+  });
   socket.on('game:start', ({ code, playerId }, done) => { const room = roomFor(code); if (!room || room.hostId !== playerId) return done?.({ error: '방장만 시작할 수 있어요.' }); if (room.players.size < 2) return done?.({ error: '2명부터 시작할 수 있어요.' }); startRound(room); schedule(room); broadcast(room); done?.({ ok: true }); });
   socket.on('answers:submit', ({ code, playerId, answers }, done) => { const room = roomFor(code); if (!room || !submit(room, playerId, answers ?? [])) return done?.({ error: '답안을 다시 확인해 주세요.' }); if ([...room.players.keys()].every(id => room.submissions.has(id) || !room.players.get(id).connected)) finish(room); else broadcast(room); done?.({ ok: true }); });
   socket.on('game:rematch', ({ code, playerId }, done) => { const room = roomFor(code); if (!room || room.hostId !== playerId || room.phase !== 'results') return done?.({ error: '재대결을 시작할 수 없어요.' }); for (const p of room.players.values()) { p.board = Array(9).fill(null); p.stars = 0; } room.round = -1; startRound(room); schedule(room); broadcast(room); done?.({ ok: true }); });

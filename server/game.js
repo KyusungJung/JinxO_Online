@@ -2,7 +2,15 @@ export const TOPICS = [
   '피자에 많이 추가하는 토핑?', '비 오는 날 생각나는 것?', '여름휴가 때 할 수 있는 것?',
   '냉장고에 꼭 있는 음식?', '아침에 가장 먼저 하는 일?', '여행 가면 사고 싶은 것?',
   '영화관에서 먹는 간식?', '스트레스 받을 때 하는 일?', '주말에 가고 싶은 곳?',
-  '친구에게 선물하고 싶은 것?', '학교 또는 회사에서 자주 하는 말?', '밤에 먹고 싶은 야식?'
+  '친구에게 선물하고 싶은 것?', '학교 또는 회사에서 자주 하는 말?', '밤에 먹고 싶은 야식?',
+  '카페에서 자주 시키는 메뉴?', '집에 꼭 있어야 하는 물건?', '봄에 떠오르는 것?',
+  '겨울에 하고 싶은 것?', '비밀로 하고 싶은 습관?', '가장 좋아하는 과일?',
+  '라면에 넣고 싶은 재료?', '잠이 안 올 때 하는 일?', '사진 찍기 좋은 장소?',
+  '친구와 만나면 가장 먼저 하는 일?', '하루 중 가장 좋아하는 시간?', '기분 전환이 필요할 때 하는 일?',
+  '어릴 때 좋아했던 간식?', '집에서 가장 편한 장소?', '가방 안에 늘 있는 물건?',
+  '운동하면 떠오르는 것?', '마법이 가능하다면 하고 싶은 것?', 'SNS에 올리고 싶은 순간?',
+  '가장 듣고 싶은 칭찬?', '비 오는 날 먹고 싶은 음식?', '여행에 꼭 챙기는 물건?',
+  '갑자기 시간이 생기면 하고 싶은 것?', '오늘 저녁 먹고 싶은 메뉴?', '가장 좋아하는 계절과 이유는?'
 ];
 const punctuation = /[\p{P}\p{S}]/gu;
 export const normalize = (value = '') => value.normalize('NFKC').toLocaleLowerCase('ko-KR').replace(punctuation, '').replace(/\s+/g, '').trim();
@@ -14,14 +22,14 @@ export function markForMatch(count, largeRoom) {
 }
 
 export function createRoom(code, hostId, hostName, bonus = 3) {
-  return { code, hostId, bonus, phase: 'lobby', round: -1, topic: null, players: new Map([[hostId, player(hostId, hostName)]]), submissions: new Map(), topics: shuffle([...TOPICS]), deadline: null, timer: null };
+  return { code, hostId, bonus, phase: 'lobby', round: -1, topic: null, customTopics: [], players: new Map([[hostId, player(hostId, hostName)]]), submissions: new Map(), topics: shuffle([...TOPICS]), deadline: null, timer: null };
 }
 function player(id, name) { return { id, name: name.slice(0, 16), connected: true, board: Array(9).fill(null), stars: 0 }; }
 function shuffle(values) { for (let i = values.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [values[i], values[j]] = [values[j], values[i]]; } return values; }
 export function startRound(room) {
   room.round += 1;
   room.phase = 'answering';
-  room.topic = room.topics[room.round % room.topics.length];
+  room.topic = room.customTopics[room.round] ?? room.topics[room.round % room.topics.length];
   room.submissions.clear();
   room.deadline = Date.now() + 75_000;
 }
@@ -64,5 +72,5 @@ export function score(p, bonus = 3) {
   return { points: circles + p.stars * 2 + lines * bonus, lines, circles, stars: p.stars };
 }
 export function snapshot(room) {
-  return { code: room.code, hostId: room.hostId, phase: room.phase, round: room.round, topic: room.topic, deadline: room.deadline, bonus: room.bonus, largeRoom: isLargeRoom(room), players: [...room.players.values()].map(p => ({ ...p, score: score(p, room.bonus) })) };
+  return { code: room.code, hostId: room.hostId, phase: room.phase, round: room.round, topic: room.topic, customTopics: room.customTopics, deadline: room.deadline, bonus: room.bonus, largeRoom: isLargeRoom(room), players: [...room.players.values()].map(p => ({ ...p, score: score(p, room.bonus) })) };
 }
