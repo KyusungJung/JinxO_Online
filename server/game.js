@@ -68,7 +68,8 @@ export function resolveRound(room) {
   }
   if (room.round === 2) {
     room.phase = 'sharing';
-    room.sharing = { turnOrder: [...room.players.values()].filter(p => p.connected).map(p => p.id), turnIndex: 0, selected: null };
+    const allAnswers = [...room.players.values()].flatMap(p => p.board.map(cell => cell?.answer).filter(Boolean));
+    room.sharing = { turnOrder: [...room.players.values()].filter(p => p.connected).map(p => p.id), turnIndex: 0, selected: null, readCount: 0, totalReads: new Set(allAnswers.map(normalize)).size };
   } else {
     room.phase = 'resolving';
     room.sharing = null;
@@ -86,8 +87,16 @@ export function nextShare(room, id) {
   if (room.phase !== 'sharing' || room.sharing?.selected?.playerId !== id) return false;
   const selectedPlayer = room.players.get(id); const selected = selectedPlayer?.board[room.sharing.selected.slot];
   if (!selected) return false;
-  selected.shared = true; room.sharing.selected = null; room.sharing.turnIndex += 1;
-  if (room.sharing.turnIndex >= room.sharing.turnOrder.length * 9) { room.phase = 'results'; room.sharing = null; }
+  const selectedAnswer = normalize(selected.answer);
+  for (const player of room.players.values()) for (const cell of player.board) if (cell && normalize(cell.answer) === selectedAnswer) cell.shared = true;
+  room.sharing.selected = null; room.sharing.readCount += 1;
+  let nextIndex = room.sharing.turnIndex + 1;
+  while (nextIndex < room.sharing.turnIndex + room.sharing.turnOrder.length) {
+    const nextPlayer = room.players.get(room.sharing.turnOrder[nextIndex % room.sharing.turnOrder.length]);
+    if (nextPlayer?.board.some(cell => cell && !cell.shared)) break;
+    nextIndex += 1;
+  }
+  if ([...room.players.values()].every(player => player.board.every(cell => cell?.shared))) { room.phase = 'results'; room.sharing = null; } else room.sharing.turnIndex = nextIndex;
   return true;
 }
 export function score(p, bonus = 3) {
@@ -98,5 +107,5 @@ export function score(p, bonus = 3) {
 export function snapshot(room) {
   const selected = room.sharing?.selected;
   const selectedCell = selected && room.players.get(selected.playerId)?.board[selected.slot];
-  return { code: room.code, hostId: room.hostId, phase: room.phase, round: room.round, topic: room.topic, customTopics: room.customTopics, deadline: room.deadline, bonus: room.bonus, largeRoom: isLargeRoom(room), sharing: room.sharing && { currentPlayerId: room.sharing.turnOrder[room.sharing.turnIndex % room.sharing.turnOrder.length], turnIndex: room.sharing.turnIndex, totalTurns: room.sharing.turnOrder.length * 9, selected: selected && { ...selected, answer: selectedCell?.answer, topic: selectedCell?.topic, topicIndex: selectedCell?.topicIndex } }, players: [...room.players.values()].map(p => ({ ...p, score: score(p, room.bonus) })) };
+  return { code: room.code, hostId: room.hostId, phase: room.phase, round: room.round, topic: room.topic, customTopics: room.customTopics, deadline: room.deadline, bonus: room.bonus, largeRoom: isLargeRoom(room), sharing: room.sharing && { currentPlayerId: room.sharing.turnOrder[room.sharing.turnIndex % room.sharing.turnOrder.length], readCount: room.sharing.readCount, totalReads: room.sharing.totalReads, selected: selected && { ...selected, answer: selectedCell?.answer, topic: selectedCell?.topic, topicIndex: selectedCell?.topicIndex } }, players: [...room.players.values()].map(p => ({ ...p, score: score(p, room.bonus) })) };
 }

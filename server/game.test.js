@@ -18,6 +18,17 @@ test('the third topic completes a nine-cell board and results', () => {
   for (let round = 0; round < 3; round += 1) { startRound(room); submit(room, 'a', [`a${round}`, `b${round}`, `c${round}`], slotsByTopic[round]); resolveRound(room); if (round === 2) shareAll(room); else assert.equal(room.phase, 'resolving'); }
   assert.equal(room.phase, 'results'); assert.equal(room.board, undefined); assert.equal(room.players.get('a').board.filter(Boolean).length, 9);
 });
+test('one read shares matching answers and skips duplicate reads', () => {
+  const room = createRoom('AAAAA', 'a', 'A'); room.players.set('b', { id: 'b', name: 'B', connected: true, board: Array(9).fill(null), stars: 0 });
+  for (let round = 0; round < 3; round += 1) {
+    startRound(room);
+    const aAnswers = round === 2 ? ['공통', 'a여덟', 'a아홉'] : [`a${round}가`, `a${round}나`, `a${round}다`];
+    const bAnswers = round === 2 ? ['공통', 'b여덟', 'b아홉'] : [`b${round}가`, `b${round}나`, `b${round}다`];
+    const slots = [round * 3, round * 3 + 1, round * 3 + 2]; assert.equal(submit(room, 'a', aAnswers, slots), true); assert.equal(submit(room, 'b', bAnswers, slots), true); resolveRound(room);
+  }
+  assert.equal(room.phase, 'sharing'); assert.equal(shareAnswer(room, 'a', 6), true); assert.equal(nextShare(room, 'a'), true);
+  assert.equal(room.players.get('a').board[6].shared, true); assert.equal(room.players.get('b').board[6].shared, true); assert.equal(room.sharing.readCount, 1); assert.equal(shareAnswer(room, 'b', 6), false);
+});
 test('answers require empty distinct cells, two words or fewer, and no reuse on a board', () => {
   const room = createRoom('AAAAA', 'a', 'A'); startRound(room);
   assert.equal(submit(room, 'a', ['세 어절 답', '둘', '셋'], [0, 1, 2]), false);
