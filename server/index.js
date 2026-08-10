@@ -25,6 +25,12 @@ io.on('connection', socket => {
     if (!p) { if (room.phase !== 'lobby') return done({ error: '이미 시작한 게임이에요.' }); p = { id: playerId, name: name.slice(0, 16), connected: true, board: Array(9).fill(null), stars: 0 }; room.players.set(playerId, p); }
     p.connected = true; socket.join(room.code); socket.data = { code: room.code, playerId }; broadcast(room); done({ room: snapshot(room), playerId });
   });
+  socket.on('room:leave', ({ code, playerId }, done) => {
+    const room = roomFor(code); const p = room?.players.get(playerId);
+    if (p) { p.connected = false; socket.leave(room.code); broadcast(room); }
+    if (socket.data?.code === room?.code) socket.data = {};
+    done?.({ ok: true });
+  });
   socket.on('room:topics', ({ code, playerId, topics }, done) => {
     const room = roomFor(code); if (!room || room.hostId !== playerId || room.phase !== 'lobby') return done?.({ error: '방장만 시작 전에 주제를 설정할 수 있어요.' });
     const cleaned = (topics ?? []).map(topic => String(topic ?? '').trim()).filter(Boolean).slice(0, 3);
