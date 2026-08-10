@@ -31,7 +31,7 @@ io.on('connection', socket => {
     room.customTopics = cleaned; broadcast(room); done?.({ ok: true });
   });
   socket.on('game:start', ({ code, playerId }, done) => { const room = roomFor(code); if (!room || room.hostId !== playerId) return done?.({ error: '방장만 시작할 수 있어요.' }); if (room.players.size < 2) return done?.({ error: '2명부터 시작할 수 있어요.' }); startRound(room); schedule(room); broadcast(room); done?.({ ok: true }); });
-  socket.on('answers:submit', ({ code, playerId, answers }, done) => { const room = roomFor(code); if (!room || !submit(room, playerId, answers ?? [])) return done?.({ error: '답안을 다시 확인해 주세요.' }); if ([...room.players.keys()].every(id => room.submissions.has(id) || !room.players.get(id).connected)) finish(room); else broadcast(room); done?.({ ok: true }); });
+  socket.on('answers:submit', ({ code, playerId, answers, slots }, done) => { const room = roomFor(code); if (!room || !submit(room, playerId, answers ?? [], slots ?? [])) return done?.({ error: '빈 칸 3개를 고르고, 두 어절 이하의 서로 다른 답을 입력해 주세요.' }); if ([...room.players.keys()].every(id => room.submissions.has(id) || !room.players.get(id).connected)) finish(room); else broadcast(room); done?.({ ok: true }); });
   socket.on('game:rematch', ({ code, playerId }, done) => { const room = roomFor(code); if (!room || room.hostId !== playerId || room.phase !== 'results') return done?.({ error: '재대결을 시작할 수 없어요.' }); for (const p of room.players.values()) { p.board = Array(9).fill(null); p.stars = 0; } room.round = -1; startRound(room); schedule(room); broadcast(room); done?.({ ok: true }); });
   socket.on('disconnect', () => { const room = roomFor(socket.data?.code); const p = room?.players.get(socket.data?.playerId); if (p) { p.connected = false; broadcast(room); } });
 });

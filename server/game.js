@@ -33,19 +33,22 @@ export function startRound(room) {
   room.submissions.clear();
   room.deadline = Date.now() + 75_000;
 }
-export function submit(room, id, answers) {
+export function submit(room, id, answers, slots) {
   if (room.phase !== 'answering' || room.submissions.has(id)) return false;
-  const usable = answers.map(value => String(value ?? '').trim()).slice(0, 3);
+  const p = room.players.get(id); if (!p) return false;
+  const usable = (Array.isArray(answers) ? answers : []).map(value => String(value ?? '').trim()).slice(0, 3);
   const normalized = usable.filter(Boolean).map(normalize);
-  if (new Set(normalized).size !== normalized.length) return false;
-  room.submissions.set(id, usable);
+  const usableSlots = (Array.isArray(slots) ? slots : []).map(Number).slice(0, 3);
+  if (usable.length !== 3 || usable.some(answer => !answer || answer.split(/\s+/).length > 2) || new Set(normalized).size !== 3 || new Set(usableSlots).size !== 3 || usableSlots.some(slot => !Number.isInteger(slot) || slot < 0 || slot > 8 || p.board[slot])) return false;
+  if (p.board.some(cell => cell && normalized.includes(normalize(cell.answer)))) return false;
+  room.submissions.set(id, { answers: usable, slots: usableSlots });
   return true;
 }
 export function resolveRound(room) {
   if (room.phase !== 'answering') return;
   const groups = new Map();
-  for (const [playerId, answers] of room.submissions) {
-    for (const answer of answers) {
+  for (const [playerId, submission] of room.submissions) {
+    for (const answer of submission.answers) {
       const key = normalize(answer);
       if (!key) continue;
       const group = groups.get(key) ?? new Set();
@@ -54,13 +57,13 @@ export function resolveRound(room) {
   }
   const largeRoom = isLargeRoom(room);
   for (const [id, p] of room.players) {
-    const answers = room.submissions.get(id) ?? [];
+    const submission = room.submissions.get(id) ?? { answers: [], slots: [] };
     const answersWithState = Array.from({ length: 3 }, (_value, index) => {
-      const answer = answers[index] ?? '';
+      const answer = submission.answers[index] ?? '';
       const count = answer ? groups.get(normalize(answer))?.size ?? 1 : 1;
-      return { answer, mark: markForMatch(count, largeRoom) };
+      return { slot: submission.slots[index], answer, mark: markForMatch(count, largeRoom) };
     });
-    answersWithState.forEach((cell, index) => { p.board[room.round * 3 + index] = cell; });
+    answersWithState.forEach(cell => { if (Number.isInteger(cell.slot)) p.board[cell.slot] = { answer: cell.answer, mark: cell.mark }; });
     p.stars += answersWithState.filter(a => a.mark === 'star').length;
   }
   room.phase = room.round === 2 ? 'results' : 'resolving';
